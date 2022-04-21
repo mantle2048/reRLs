@@ -13,6 +13,7 @@ from gym import wrappers
 from typing import Dict
 from collections import OrderedDict
 from pyvirtualdisplay import Display
+from gym.wrappers.normalize import NormalizeObservation
 from reRLs.infrastructure.utils import utils
 from reRLs.infrastructure.loggers import setup_logger, TensorBoardLogger
 from reRLs.infrastructure.utils import pytorch_util as ptu
@@ -63,6 +64,12 @@ class Base_Trainer(abc.ABC):
             num_envs=1,
             seed=self.config['seed'] + 100
         )
+
+
+        # Add normalize observation wrapper
+        if self.config.setdefault('obs_norm', False):
+            self.env = NormalizeObservation(self.env)
+            self.eval_env = NormalizeObservation(self.eval_env)
 
         # Add noise wrapper
         if self.config.setdefault('action_noise_std', 0) > 0:

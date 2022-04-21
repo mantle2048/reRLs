@@ -202,28 +202,30 @@ def test_async_env(seed=1):
     
     arg_list =  [
         '--env_name',
-        'CartPole-v1',
+        'LunarLander-v2',
         '--exp_prefix',
-        'PG-rtg-baseline-gae_CartPole-v1',
+        'PG-rtg-baseline-gae_LunarLander-v2',
         '--n_itr',
-        '11',
+        '151',
         '--seed',
         f'{seed}',
         '--video_log_freq',
-        '10',
+        '-1',
         '--tabular_log_freq',
         '1',
         '--reward_to_go',
+        '--itr_size',
+        '1000',
         '--gae_lambda',
-        '0.97',
+        '0.98',
         '--gamma',
-        '0.99',
+        '0.98',
         '--save_params',
         '--use_baseline',
         '--num_envs',
         '1',
         '-lr',
-        '3e-4'
+        '1e-3'
     ]
     args = get_parser().parse_args(args=arg_list) # add 'args=[]' in ( ) for useage of jupyter notebook
     config = vars(args)
@@ -237,4 +239,6 @@ def test_async_env(seed=1):
 if __name__ == '__main__':
     # test_mujoco_video_record()
     # test_pygame_video_record()
-    test_async_env(0)
+    test_async_env(3)
+
+

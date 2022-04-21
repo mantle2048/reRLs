@@ -53,6 +53,7 @@ class AimLogger(Logger):
         super().log_variant(file_name, variant_data)
         assert isinstance(file_name, str), 'file_name must be std'
         assert isinstance(variant_data, dict), 'file_name must be dict'
+        file_name = osp.splitext(file_name)[-2] # Remove the extension name which Aim does not support.
         self._aim_run[file_name] = safe_dict(variant_data)
 
     def log_scalar(self, scalar, name, step_, context=None):
@@ -105,10 +106,16 @@ class AimLogger(Logger):
     def dump_tabular(self, *args, **kwargs):
 
         tabular_dict = dict(self._tabular)
+
         assert 'Itr' in tabular_dict.keys(), 'no item **Itr** in tabular for aim logger'
         itr = tabular_dict.pop('Itr')
+
+        assert 'TotalEnvInteracts' in tabular_dict.keys(), 'no item **Itr** in tabular for aim logger'
+        step_cnt= tabular_dict.pop('TotalEnvInteracts')
+
         for key, value in tabular_dict.items():
-            self.log_scalar(value, key, itr)
+            self.log_scalar(value, key, itr, context={'mode': 'Itr'})
+            self.log_scalar(value, key, step_cnt, context={'mode': 'Step'})
 
         super().dump_tabular(*args, **kwargs)
 

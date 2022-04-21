@@ -92,10 +92,6 @@ def create_log_dir(
     if base_log_dir is None:
         base_log_dir = conf.LOCAL_LOG_DIR
 
-    print('########################')
-    print('logging outputs to ', base_log_dir)
-    print('########################')
-
     if include_exp_prefix_sub_dir:
         # log_dir = osp.join(base_log_dir, exp_prefix.replace("_", "-"), exp_name)
         log_dir = osp.join(base_log_dir, exp_prefix, exp_name)
@@ -104,6 +100,11 @@ def create_log_dir(
     if osp.exists(log_dir):
         print("WARNING: Log directory already exists {}".format(log_dir))
     os.makedirs(log_dir, exist_ok=True)
+
+    print('########################')
+    print('logging outputs to ', log_dir)
+    print('########################')
+
     return log_dir
 
 

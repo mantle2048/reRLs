@@ -1,5 +1,6 @@
 import gym
 from gym.vector import AsyncVectorEnv, SyncVectorEnv
+from gym.wrappers.normalize import NormalizeObservation
 
 def make_envs(env_name, num_envs, seed, start_idx=0, mode='async'):
     ''' Helper function to make AsyncVectorEnv '''

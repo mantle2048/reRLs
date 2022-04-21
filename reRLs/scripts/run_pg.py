@@ -68,7 +68,7 @@ def get_parser():
     import argparse
     parser = argparse.ArgumentParser()
 
-    # exp & logger args
+    # exp args
     parser.add_argument('--env_name', type=str, default='CartPole-v1')
     parser.add_argument('--no_gpu', '-ngpu', action='store_true')
     parser.add_argument('--which_gpu', '-gpu_id', default=0)
@@ -90,6 +90,7 @@ def get_parser():
     parser.add_argument('--tabular_log_freq', type=int, default=1)
     parser.add_argument('--save_params', action='store_true')
     parser.add_argument('--num_envs', type=int, default=1)
+    parser.add_argument('--obs_norm', action='store_true')
 
     # rl common args
     parser.add_argument('--gamma', type=float, default=0.99)

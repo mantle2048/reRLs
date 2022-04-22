@@ -204,7 +204,7 @@ def test_async_env(seed=1):
         '--env_name',
         'LunarLander-v2',
         '--exp_prefix',
-        'PG-rtg-baseline-gae-ent_LunarLander-v2',
+        'PG-rtg-baseline-gae_LunarLander-v2',
         '--n_itr',
         '301',
         '--seed',
@@ -217,7 +217,7 @@ def test_async_env(seed=1):
         '--itr_size',
         '1000',
         '--gae_lambda',
-        '0.98',
+        '0.99',
         '--gamma',
         '0.99',
         '--save_params',
@@ -227,7 +227,7 @@ def test_async_env(seed=1):
         '--num_envs',
         '1',
         '-lr',
-        '1e-3'
+        '5e-3'
     ]
     args = get_parser().parse_args(args=arg_list) # add 'args=[]' in ( ) for useage of jupyter notebook
     config = vars(args)

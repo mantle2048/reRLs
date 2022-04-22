@@ -6,6 +6,7 @@ from .base_agent import BaseAgent
 from reRLs.policies import MLPPolicyPG
 from reRLs.infrastructure.replay_buffer import ReplayBuffer
 from reRLs.infrastructure.utils import utils
+from reRLs.infrastructure.utils import pytorch_util as ptu
 
 class PGAgent(BaseAgent):
 
@@ -34,6 +35,7 @@ class PGAgent(BaseAgent):
             learning_rate=self.agent_config['learning_rate'],
             use_baseline=self.agent_config['use_baseline']
         )
+        self.policy.apply(ptu.init_weights)
 
         # replay buffer
         self.replay_buffer = ReplayBuffer(self.buffer_size)

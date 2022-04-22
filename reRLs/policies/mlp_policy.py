@@ -77,9 +77,6 @@ class MLPPolicy(BasePolicy, nn.Module, abc.ABC):
         else:
             self.baseline = None
 
-        # xavier init
-        self.apply(ptu.init_weights)
-
     def save(self, filepath=None):
         torch.save(self.state_dict(), filepath)
 

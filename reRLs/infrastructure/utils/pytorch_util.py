@@ -81,7 +81,11 @@ def from_numpy(*args, **kwargs):
 def to_numpy(tensor):
     return tensor.to('cpu').detach().numpy()
 
-def init_weights(m):
-    if isinstance(m, nn.Linear):
-        torch.nn.init.xavier_uniform_(m.weight)
-        m.bias.data.fill_(0.01)
+def init_weights(m: nn.Module, gain: float = 1):
+    """
+        Orthogonal initialization (used in PPO and A2C)
+    """
+    if isinstance(m, (nn.Linear, nn.Conv2d)):
+        torch.nn.init.orthogonal_(m.weight, gain=gain)
+        if m.bias is not None:
+            m.bias.data.fill_(0.00)

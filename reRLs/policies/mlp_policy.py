@@ -36,6 +36,7 @@ class MLPPolicy(BasePolicy, nn.Module, abc.ABC):
         self.learning_rate = learning_rate
         self.training = training
         self.use_baseline = use_baseline
+        self.entropy_coeff = kwargs.get('entropy_coeff', 0.)
 
         # discrete or continus
         if self.discrete:
@@ -152,9 +153,11 @@ class MLPPolicyPG(MLPPolicy):
             # by the `forward` method
         # HINT3: don't forget that `optimizer.step()` MINIMIZES a loss
 
-        log_pi = self.forward(obss).log_prob(acts)
+        act_dist = self.forward(obss)
+        log_pi = act_dist.log_prob(acts)
+        entropy = act_dist.entropy().mean()
         weighted_pg = torch.mul(log_pi, advs)
-        loss = -torch.sum(weighted_pg)
+        loss = -torch.sum(weighted_pg) + self.entropy_coeff * entropy
 
         # optimize `loss` using `self.optimizer`
         # HINT: remember to `zero_grad` first

@@ -29,12 +29,13 @@ class PG_Trainer():
         }
 
         # update rules, batch_size, buffer_size and other agent args
-        train_args = {
+        agent_train_args = {
             'buffer_size': config['buffer_size'],
-            'batch_size': config.setdefault('batch_size', config['itr_size'])
+            'entropy_coeff': config['entropy_coeff'],
+            'batch_size': config.setdefault('batch_size', config['itr_size']),
         }
 
-        agent_config = {** neural_network_args, **estimate_advantage_args, **train_args}
+        agent_config = {**neural_network_args, **estimate_advantage_args, **agent_train_args}
 
         # logger args
         logger_config = {
@@ -90,11 +91,12 @@ def get_parser():
     parser.add_argument('--tabular_log_freq', type=int, default=1)
     parser.add_argument('--save_params', action='store_true')
     parser.add_argument('--num_envs', type=int, default=1)
-    parser.add_argument('--obs_norm', action='store_true')
 
     # rl common args
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--action_noise_std', type=float, default=0)
+    parser.add_argument('--entropy_coeff', type=float, default=0.)
+    parser.add_argument('--obs_norm', action='store_true')
 
     # adv args
     parser.add_argument('--reward_to_go', '-rtg', action='store_true')
@@ -104,7 +106,7 @@ def get_parser():
 
     # nn args
     parser.add_argument('--learning_rate', '-lr', type=float, default=1e-3)
-    parser.add_argument('--layers', '-l', nargs='+', type=int, default=[400,300])
+    parser.add_argument('--layers', '-l', nargs='+', type=int, default=[64,64])
 
     return parser
 

@@ -204,9 +204,9 @@ def test_async_env(seed=1):
         '--env_name',
         'LunarLander-v2',
         '--exp_prefix',
-        'PG-rtg-baseline-gae_LunarLander-v2',
+        'PG-rtg-baseline-gae-ent_LunarLander-v2',
         '--n_itr',
-        '151',
+        '301',
         '--seed',
         f'{seed}',
         '--video_log_freq',
@@ -219,8 +219,10 @@ def test_async_env(seed=1):
         '--gae_lambda',
         '0.98',
         '--gamma',
-        '0.98',
+        '0.99',
         '--save_params',
+        '--entropy_coeff',
+        '0.01',
         '--use_baseline',
         '--num_envs',
         '1',
@@ -239,6 +241,6 @@ def test_async_env(seed=1):
 if __name__ == '__main__':
     # test_mujoco_video_record()
     # test_pygame_video_record()
-    test_async_env(3)
+    test_async_env(4)
 
 

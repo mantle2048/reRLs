@@ -1,7 +1,9 @@
 from typing import Union, List
 
+import tree
 import torch
 from torch import nn
+import numpy as np
 
 Activation = Union[str, nn.Module]
 
@@ -89,3 +91,75 @@ def init_weights(m: nn.Module, gain: float = 1):
         torch.nn.init.orthogonal_(m.weight, gain=gain)
         if m.bias is not None:
             m.bias.data.fill_(0.00)
+
+def convert_to_numpy(x, reduce_type=True):
+    """Converts values in `stats` to non-Tensor numpy or python types.
+    Args:
+        x: Any (possibly nested) struct, the values in which will be
+            converted and returned as a new struct with all torch/tf tensors
+            being converted to numpy types.
+        reduce_type: Whether to automatically reduce all float64 and int64 data
+            into float32 and int32 data, respectively.
+    Returns:
+        A new struct with the same structure as `x`, but with all
+        values converted to numpy arrays (on CPU).
+    """
+
+    # The mapping function used to numpyize torch/tf Tensors (and move them
+    # to the CPU beforehand).
+    def mapping(item):
+        if torch and isinstance(item, torch.Tensor):
+            ret = (
+                item.cpu().item()
+                if len(item.size()) == 0
+                else item.detach().cpu().numpy()
+            )
+        else:
+            ret = item
+        if reduce_type and isinstance(ret, np.ndarray):
+            if np.issubdtype(ret.dtype, np.floating):
+                ret = ret.astype(np.float32)
+            elif np.issubdtype(ret.dtype, int):
+                ret = ret.astype(np.int32)
+            return ret
+        return ret
+
+    return tree.map_structure(mapping, x)
+
+def convert_to_torch_tensor(x, device):
+    """  Copied from ray/rllib
+    Converts any struct to torch.Tensors.
+    x (any): Any (possibly nested) struct, the values in which will be
+        converted and returned as a new struct with all leaves converted
+        to torch tensors.
+    Returns:
+        Any: A new struct with the same structure as `stats`, but with all
+            values converted to torch Tensor types.
+    """
+
+    def mapping(item):
+        # Already torch tensor -> make sure it's on right device.
+        if torch.is_tensor(item):
+            return item if device is None else item.to(device)
+        # Numpy arrays.
+        if isinstance(item, np.ndarray):
+            # Object type (e.g. info dicts in train batch): leave as-is.
+            if item.dtype == object:
+                return item
+            # Non-writable numpy-arrays will cause PyTorch warning.
+            elif item.flags.writeable is False:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    tensor = torch.from_numpy(item)
+            # Already numpy: Wrap as torch tensor.
+            else:
+                tensor = torch.from_numpy(item)
+        # Everything else: Convert to numpy, then wrap as torch tensor.
+        else:
+            tensor = torch.from_numpy(np.asarray(item))
+        # Floatify all float64 tensors.
+        if tensor.dtype == torch.double:
+            tensor = tensor.float()
+        return tensor if device is None else tensor.to(device)
+
+    return tree.map_structure(mapping, x)

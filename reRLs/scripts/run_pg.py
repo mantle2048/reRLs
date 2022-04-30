@@ -2,7 +2,7 @@ import os
 import time
 
 from typing import Dict
-from reRLs.infrastructure.rl_trainer import Traj_Trainer
+from reRLs.infrastructure.rl_trainer import RL_Trainer
 from reRLs.agents.pg_agent import PGAgent
 
 class PG_Trainer():
@@ -21,7 +21,6 @@ class PG_Trainer():
 
         # adv args
         estimate_advantage_args = {
-            'gamma': config['gamma'],
             'standardize_advantages': not(config['dont_standardize_advantages']),
             'reward_to_go': config['reward_to_go'],
             'use_baseline': config['use_baseline'],
@@ -30,9 +29,10 @@ class PG_Trainer():
 
         # update rules, batch_size, buffer_size and other agent args
         agent_train_args = {
-            'buffer_size': config['buffer_size'],
+            'gamma': config['gamma'],
             'entropy_coeff': config['entropy_coeff'],
-            'batch_size': config.setdefault('batch_size', config['itr_size']),
+            'grad_clip': config['grad_clip'],
+            'buffer_size': config['buffer_size'],
         }
 
         agent_config = {**neural_network_args, **estimate_advantage_args, **agent_train_args}
@@ -54,7 +54,7 @@ class PG_Trainer():
         ## RL TRAINER
         ################
 
-        self.rl_trainer =  Traj_Trainer(self.config)
+        self.rl_trainer =  RL_Trainer(self.config)
 
     def run_training_loop(self):
 
@@ -83,20 +83,28 @@ def get_parser():
     # train args
     parser.add_argument('--n_itr', '-n', type=int, default=10)
     parser.add_argument('--itr_size', type=int, default=1000) #steps collected per train iteration
+    parser.add_argument('--batch_size', type=int, default=1000) #steps collected per train iteration
     parser.add_argument('--num_trajectories_eval', '-nte', type=int, default=5) #steps collected per eval iteration
-    parser.add_argument('--buffer_size', type=int, default=1000000) #steps collected per train iteration
     parser.add_argument('--ep_len', type=int) #students shouldn't change this away from env's default
     parser.add_argument('--num_agent_train_steps_per_itr', type=int, default=1)
     parser.add_argument('--video_log_freq', type=int, default=-1)
     parser.add_argument('--tabular_log_freq', type=int, default=1)
     parser.add_argument('--save_params', action='store_true')
+
+    # wrapper args
+    parser.add_argument('--obs_norm', action='store_true')
+    parser.add_argument('--action_noise_std', type=float, default=0)
+
+    # sampler args
+    parser.add_argument('--num_workers', type=int, default=1)
     parser.add_argument('--num_envs', type=int, default=1)
+    parser.add_argument('--deterministic', action='store_true')
 
     # rl common args
     parser.add_argument('--gamma', type=float, default=0.99)
-    parser.add_argument('--action_noise_std', type=float, default=0)
     parser.add_argument('--entropy_coeff', type=float, default=0.)
-    parser.add_argument('--obs_norm', action='store_true')
+    parser.add_argument('--grad_clip', type=float, default=None)
+    parser.add_argument('--buffer_size', type=int, default=1000000) #steps collected per train iteration
 
     # adv args
     parser.add_argument('--reward_to_go', '-rtg', action='store_true')

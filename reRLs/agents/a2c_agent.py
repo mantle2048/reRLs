@@ -1,3 +1,4 @@
+import ray
 import numpy as np
 from scipy.signal import lfilter
 from typing import Dict,Union,List
@@ -8,7 +9,7 @@ from reRLs.infrastructure.replay_buffer import ReplayBuffer
 from reRLs.infrastructure.utils import utils
 from reRLs.infrastructure.utils import pytorch_util as ptu
 
-class PGAgent(BaseAgent):
+class A2CAgent(BaseAgent):
 
     def __init__(self, env, agent_config: Dict):
         super().__init__()
@@ -33,9 +34,7 @@ class PGAgent(BaseAgent):
             layers  = self.agent_config['layers'],
             discrete = self.agent_config['discrete'],
             learning_rate=self.agent_config['learning_rate'],
-            use_baseline=self.agent_config['use_baseline'],
-            entropy_coeff=self.agent_config['entropy_coeff'],
-            grad_clip=self.agent_config['grad_clip']
+            use_baseline=self.agent_config['use_baseline']
         )
         self.policy.apply(ptu.init_weights)
 

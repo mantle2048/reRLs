@@ -13,17 +13,19 @@ from reRLs.infrastructure.utils import pytorch_util as ptu
 from reRLs.infrastructure.utils import utils
 
 
-class MLPPolicy(BasePolicy, nn.Module, abc.ABC):
+class GaussianPolicy(BasePolicy, nn.Module, abc.ABC):
 
     def __init__(
         self,
         obs_dim,
         act_dim,
-        layers=[256,256],
+        layers=[64,64],
         discrete=False,
         learning_rate=1e-3,
         training=True,
         use_baseline=True,
+        entropy_coeff=0.01,
+        grad_clip=40.0,
         **kwargs
         ):
         super().__init__(**kwargs)
@@ -36,7 +38,8 @@ class MLPPolicy(BasePolicy, nn.Module, abc.ABC):
         self.learning_rate = learning_rate
         self.training = training
         self.use_baseline = use_baseline
-        self.entropy_coeff = kwargs.get('entropy_coeff', 0.)
+        self.entropy_coeff = entropy_coeff
+        self.grad_clip = grad_clip
 
         # discrete or continus
         if self.discrete:
@@ -62,6 +65,7 @@ class MLPPolicy(BasePolicy, nn.Module, abc.ABC):
                 params = itertools.chain(self.mean_net.parameters(),[self.logstd]),
                 lr = self.learning_rate)
 
+
         # init baseline
         if self.use_baseline:
             self.baseline = ptu.build_mlp(
@@ -74,13 +78,14 @@ class MLPPolicy(BasePolicy, nn.Module, abc.ABC):
                 self.baseline.parameters(),
                 self.learning_rate,
             )
+
         else:
             self.baseline = None
 
     def save(self, filepath=None):
         torch.save(self.state_dict(), filepath)
 
-    def get_action(self, obs: np.ndarray) -> np.ndarray:
+    def get_action(self, obs: np.ndarray, deterministic=False) -> np.ndarray:
         '''
             query the policy with observation(s) to get selected action(s)
         '''
@@ -90,14 +95,17 @@ class MLPPolicy(BasePolicy, nn.Module, abc.ABC):
         obs = ptu.from_numpy(obs.astype(np.float32))
 
         act_dist = self.forward(obs)
-        act = act_dist.sample()
+
+        if deterministic and not self.discrete:
+            act = act_dist.loc
+        else:
+            act = act_dist.sample()
 
         if self.discrete and act.shape != ():
             act = act.squeeze()
 
         return ptu.to_numpy(act)
 
-    @abc.abstractmethod
     def update(self, obss, acts, **kwargs):
          '''
              update/train this policy with different algos
@@ -126,7 +134,51 @@ class MLPPolicy(BasePolicy, nn.Module, abc.ABC):
 
         return act_dist
 
-class MLPPolicyPG(MLPPolicy):
+    # def set_state(self, state: dict) -> None:
+
+    #     # Set optimizer vars first.
+    #     optimizer_vars = state.get("_optimizer_variables", None)
+    #     if optimizer_vars:
+    #         assert len(optimizer_vars) == len(self._optimizers)
+    #         for o, s in zip(self._optimizers, optimizer_vars):
+    #             optim_state_dict = ptu.convert_to_torch_tensor(s, device=self.device)
+    #             o.load_state_dict(optim_state_dict)
+    #     # Set exploration's state.
+
+    #     if hasattr(self, "exploration") and "_exploration_state" in state:
+    #         self.exploration.set_state(state=state["_exploration_state"])
+
+    #     # Then the Policy's (NN) weights.
+    #     self.set_weights(state['weights'])
+
+    # def set_weights(self, state_dict):
+    #     weights = ptu.convert_to_torch_tensor(state_dict, device=ptu.device)
+    #     print(weights)
+    #     return self.load_state_dict(weights)
+
+    # def get_state(self):
+    #     state = self.get_weights()
+    #     state["_optimizer_variables"] = []
+    #     for i, o in enumerate(self._optimizers):
+    #         optim_state_dict = ptu.convert_to_numpy(o.state_dict())
+    #         state["_optimizer_variables"].append(optim_state_dict)
+    #     # Add exploration state.
+    #     if hasattr(self, "exploration"):
+    #         self.exploration.set_state(state=state["_exploration_state"])
+    #     return state
+
+    # def get_weights(self):
+        # return {k: v.cpu().detach().numpy() for k, v in self.state_dict().items()}
+
+    def set_state(self, state_dict):
+        self.load_state_dict(state_dict)
+
+    def get_state(self):
+        # return self.state_dict()
+        # return {k: v.cpu().detach().numpy() for k, v in self.state_dict().items()}
+        return {k: v.cpu().detach() for k, v in self.state_dict().items()}
+
+class GaussianPolicyPG(GaussianPolicy):
 
     def __init__(self, obs_dim, act_dim, layers, **kwargs):
 
@@ -154,12 +206,14 @@ class MLPPolicyPG(MLPPolicy):
         log_pi = act_dist.log_prob(acts)
         entropy = act_dist.entropy().mean()
         weighted_pg = torch.mul(log_pi, advs)
-        loss = -torch.sum(weighted_pg) + self.entropy_coeff * entropy
+        loss = -torch.sum(weighted_pg) - self.entropy_coeff * entropy
 
         # optimize `loss` using `self.optimizer`
         # HINT: remember to `zero_grad` first
         self.optimizer.zero_grad()
         loss.backward()
+        if self.grad_clip:
+            nn.utils.clip_grad_norm_(self.parameters(), self.grad_clip)
         self.optimizer.step()
 
         if self.use_baseline:
@@ -192,6 +246,8 @@ class MLPPolicyPG(MLPPolicy):
         train_log['Training loss'] = ptu.to_numpy(loss)
         if self.use_baseline:
             train_log['Baseline loss'] = ptu.to_numpy(baseline_loss)
+        if self.entropy_coeff:
+            train_log['Entropy'] = ptu.to_numpy(entropy)
         return train_log
 
 

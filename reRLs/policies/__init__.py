@@ -1,1 +1,1 @@
-from .mlp_policy import MLPPolicy, MLPPolicyPG
+from .gaussian_policy import GaussianPolicyPG, GaussianPolicy

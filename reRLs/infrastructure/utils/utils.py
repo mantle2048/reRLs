@@ -6,105 +6,6 @@ import numpy as np
 from pyvirtualdisplay import Display
 from moviepy.editor import ImageSequenceClip
 
-############################################
-############################################
-def combined_shape(length, shape=None):
-    if shape is None:
-        return (length,)
-    return (length, shape) if np.isscalar(shape) else (length, *shape)
-
-def calculate_mean_prediction_error(env, action_sequence, models, data_statistics):
-
-    model = models[0]
-
-    # true
-    true_states = perform_actions(env, action_sequence)['obs']
-
-    # predicted
-    ob = np.expand_dims(true_states[0],0)
-    pred_states = []
-    for ac in action_sequence:
-        pred_states.append(ob)
-        action = np.expand_dims(ac,0)
-        ob = model.get_prediction(ob, action, data_statistics)
-    pred_states = np.squeeze(pred_states)
-
-    # mpe
-    mpe = mean_squared_error(pred_states, true_states)
-
-    return mpe, true_states, pred_states
-
-def perform_actions(env, actions):
-    obs = env.reset()
-    obss, image_obss, acts, rews, next_obss, dones = [], [], [], [], [], []
-    steps = 0
-    for ac in actions:
-        obs.append(ob)
-        acs.append(ac)
-        ob, rew, done, _ = env.step(ac)
-        # add the observation after taking a step to next_obs
-        next_obs.append(ob)
-        rewards.append(rew)
-        steps += 1
-        # If the episode ended, the corresponding terminal value is 1
-        # otherwise, it is 0
-        if done:
-            terminals.append(1)
-            break
-        else:
-            terminals.append(0)
-
-    return Path(obs, image_obs, acs, rewards, next_obs, terminals)
-
-def mean_squared_error(a, b):
-    return np.mean((a-b)**2)
-
-############################################
-############################################
-
-def mp_sample_trajectory(env, policy, max_path_length, render=False, render_mode=('rgb_array')):
-    '''mp sample version do not support render'''
-    num_envs = env.num_envs
-    obs = env.reset()
-
-    obss, acts, rews, next_obss, terminals, image_obss = [], [], [], [], [], []
-    steps = 0
-    while True:
-
-        obss.append(obs)
-        act = policy.get_action(obs)
-
-        acts.append(act)
-
-        next_obs, rew, done, _ = env.step(act)
-
-        rews.append(rew)
-        next_obss.append(next_obs)
-        obs = next_obs
-
-        steps += 1
-
-        if steps >= max_path_length:
-            rollout_done = [True] * num_envs
-        else:
-            rollout_done = done
-        terminals.append(rollout_done)
-
-
-        if steps >= max_path_length:
-            break
-    obss = np.stack(obss, axis=1)
-    acts = np.stack(acts, axis=1)
-    rews = np.stack(rews, axis=1)
-    next_obss = np.stack(next_obss, axis=1)
-    terminals = np.stack(terminals, axis=1)
-    import ipdb; ipdb.set_trace()
-    mp_path = [Path(obs, [], act, rew, next_obs, terminal)  \
-                for obs, act, rew, next_obs, terminal in  \
-                zip(obss, acts, rews, next_obss, terminals)]
-
-    return mp_path
-
 def sample_trajectory(env, policy, max_path_length, render=False, render_mode=('rgb_array')):
     obs = env.reset()
 
@@ -142,20 +43,6 @@ def sample_trajectory(env, policy, max_path_length, render=False, render_mode=('
             break
 
     return Path(obss, image_obss, acts, rews, next_obss, terminals)
-
-def mp_sample_trajectories(env, policy, min_timesteps_per_batch, max_path_length, render=False, render_mode=('rgb_array')):
-    paths = []
-    timesteps_this_batch = 0
-    while timesteps_this_batch < min_timesteps_per_batch:
-        # cur_path_length = min(max_path_length, min_timesteps_per_batch - timesteps_this_batch)
-        mp_path = mp_sample_trajectory(env, policy, max_path_length, render, render_mode)
-        for path in mp_path:
-            timesteps_this_batch += get_pathlength(path)
-            paths.append(path)
-            if timesteps_this_batch >= min_timesteps_per_batch:
-                break
-
-    return paths, timesteps_this_batch
 
 def sample_trajectories(env, policy, min_timesteps_per_batch, max_path_length, render=False, render_mode=('rgb_array')):
     paths = []
@@ -209,8 +96,67 @@ def convert_listofrollouts(paths):
 ############################################
 ############################################
 
+def perform_actions(env, actions):
+    obs = env.reset()
+    obss, image_obss, acts, rews, next_obss, dones = [], [], [], [], [], []
+    steps = 0
+    for ac in actions:
+        obs.append(ob)
+        acs.append(ac)
+        ob, rew, done, _ = env.step(ac)
+        # add the observation after taking a step to next_obs
+        next_obs.append(ob)
+        rewards.append(rew)
+        steps += 1
+        # If the episode ended, the corresponding terminal value is 1
+        # otherwise, it is 0
+        if done:
+            terminals.append(1)
+            break
+        else:
+            terminals.append(0)
+
+    return Path(obs, image_obs, acs, rewards, next_obs, terminals)
+
 def get_pathlength(path):
     return len(path["rew"])
+
+############################################
+############################################
+
+def combined_shape(length, shape=None):
+    if shape is None:
+        return (length,)
+    return (length, shape) if np.isscalar(shape) else (length, *shape)
+
+def calculate_mean_prediction_error(env, action_sequence, models, data_statistics):
+
+    model = models[0]
+
+    # true
+    true_states = perform_actions(env, action_sequence)['obs']
+
+    # predicted
+    ob = np.expand_dims(true_states[0],0)
+    pred_states = []
+    for ac in action_sequence:
+        pred_states.append(ob)
+        action = np.expand_dims(ac,0)
+        ob = model.get_prediction(ob, action, data_statistics)
+    pred_states = np.squeeze(pred_states)
+
+    # mpe
+    mpe = mean_squared_error(pred_states, true_states)
+
+    return mpe, true_states, pred_states
+
+
+def mean_squared_error(a, b):
+    return np.mean((a-b)**2)
+
+############################################
+############################################
+
 
 def standardize(data, mean, std, eps=1e-8):
     return (data-mean)/(std+eps)

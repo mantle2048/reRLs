@@ -1,9 +1,9 @@
+import reRLs
+from reRLs.scripts.run_pg import get_parser, main, PG_Trainer
 # %matplotlib notebook
 # %matplotlib inline
 # %reload_ext autoreload
 # %autoreload 2
-import reRLs
-from reRLs.scripts.run_pg import get_parser, main, PG_Trainer
 
 # # Create a virtual screen
 
@@ -217,17 +217,23 @@ def test_async_env(seed=1):
         '--itr_size',
         '1000',
         '--gae_lambda',
-        '0.99',
+        '0.98',
         '--gamma',
-        '0.99',
+        '0.994',
         '--save_params',
         '--entropy_coeff',
         '0.01',
         '--use_baseline',
+        '--num_workers',
+        '4',
         '--num_envs',
         '1',
         '-lr',
-        '5e-3'
+        '3e-3',
+        '--num_agent_train_steps_per_itr',
+        '1',
+        '--batch_size',
+        '1000',
     ]
     args = get_parser().parse_args(args=arg_list) # add 'args=[]' in ( ) for useage of jupyter notebook
     config = vars(args)
@@ -241,6 +247,6 @@ def test_async_env(seed=1):
 if __name__ == '__main__':
     # test_mujoco_video_record()
     # test_pygame_video_record()
-    test_async_env(4)
+    test_async_env(2)
 
 

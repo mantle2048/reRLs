@@ -165,7 +165,7 @@ class RL_Trainer(object):
             self.agent.add_to_replay_buffer(paths)
 
             ## train agent (using sampled data from replay buffer)
-            train_logs = self.train_agent()
+            train_logs = self.train_agent(itr)
 
             ## log/save
             if self.logtabular:
@@ -204,13 +204,18 @@ class RL_Trainer(object):
     ####################################
     ####################################
 
-    def train_agent(self):
+    def train_agent(self, itr):
 
         train_logs = []
         for train_step in range(self.config['num_agent_train_steps_per_itr']):
             data_batch = self.agent.sample(self.config.setdefault('batch_size', self.config['itr_size']))
-            train_log = self.agent.train(data_batch)
+            train_log, continue_training = self.agent.train(data_batch)
             train_logs.append(train_log)
+            ## continue_training tag is used for early stop training
+            ## when some constraints (like target kl) are not satisfied
+            if not continue_training:
+                self.logger.log(f"Early stopping at Itr {itr}")
+                break
 
         return train_logs
 

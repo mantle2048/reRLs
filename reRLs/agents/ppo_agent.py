@@ -23,6 +23,7 @@ class PPOAgent(BaseAgent):
         self.reward_to_go = self.agent_config.setdefault('reward_to_go', True)
         self.gae_lambda = self.agent_config.setdefault('gae_lambda', 0.99)
         self.epsilon = self.agent_config.setdefault('epsilon', 0.2)
+        self.target_kl = self.agent_config.setdefault('target_kl', None)
         self._create_policy_and_buffer()
 
     def _create_policy_and_buffer(self):
@@ -59,7 +60,11 @@ class PPOAgent(BaseAgent):
         ## HINT: `train_log` should be returned by the actor update method
         train_log = self.policy.update(obss, acts, log_pi_old, advs, q_values)
 
-        return train_log
+        continue_training = True
+        if self.target_kl is not None and train_log['KL Divergence'] > 1.5 * self.target_kl:
+            continue_training = False
+
+        return train_log, continue_training
 
     def calculate_q_values(self, rews_list):
 

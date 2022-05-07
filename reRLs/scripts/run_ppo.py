@@ -29,6 +29,7 @@ class PPO_Trainer():
         # surrogate object args
         surrogate_object_args = {
             'epsilon': config['epsilon'],
+            'target_kl': config['target_kl'],
         }
 
 
@@ -126,6 +127,7 @@ def get_parser():
 
     # surrogate_obj args
     parser.add_argument('--epsilon', type=float, default=0.2)
+    parser.add_argument('--target_kl', type=float, default=None)
 
     return parser
 

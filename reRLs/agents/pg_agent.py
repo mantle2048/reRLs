@@ -66,7 +66,9 @@ class PGAgent(BaseAgent):
         ## HINT: `train_log` should be returned by the actor update method
         train_log = self.policy.update(obss, acts, advs, q_values)
 
-        return train_log
+        continue_training = True
+
+        return train_log, continue_training
 
     def calculate_q_values(self, rews_list):
 

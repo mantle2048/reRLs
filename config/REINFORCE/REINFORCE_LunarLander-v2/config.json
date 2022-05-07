@@ -1,0 +1,63 @@
+{
+  "action_noise_std": 0,
+  "agent_class": {
+    "$class": "reRLs.agents.pg_agent.PGAgent"
+  },
+  "agent_config": {
+    "act_dim": 4,
+    "buffer_size": 1000000,
+    "discrete": true,
+    "entropy_coeff": 0.0,
+    "gae_lambda": null,
+    "gamma": 0.995,
+    "grad_clip": null,
+    "layers": [
+      64,
+      64
+    ],
+    "learning_rate": 0.003,
+    "obs_dim": 8,
+    "reward_to_go": true,
+    "standardize_advantages": true,
+    "use_baseline": false
+  },
+  "batch_size": 1000,
+  "buffer_size": 1000000,
+  "deterministic": false,
+  "dont_standardize_advantages": false,
+  "entropy_coeff": 0.0,
+  "env_name": "LunarLander-v2",
+  "ep_len": 1000,
+  "exp_id": 0,
+  "exp_prefix": "REINFORCE_LunarLander-v2",
+  "gae_lambda": null,
+  "gamma": 0.995,
+  "grad_clip": null,
+  "itr_size": 2000,
+  "layers": [
+    64,
+    64
+  ],
+  "learning_rate": 0.003,
+  "logger_config": {
+    "exp_id": 0,
+    "exp_prefix": "REINFORCE_LunarLander-v2",
+    "seed": 2,
+    "snapshot_mode": "last"
+  },
+  "n_itr": 151,
+  "no_gpu": false,
+  "num_agent_train_steps_per_itr": 1,
+  "num_envs": 1,
+  "num_trajectories_eval": 5,
+  "num_workers": 4,
+  "obs_norm": false,
+  "reward_to_go": true,
+  "save_params": true,
+  "seed": 2,
+  "snapshot_mode": "last",
+  "tabular_log_freq": 1,
+  "use_baseline": false,
+  "video_log_freq": -1,
+  "which_gpu": 0
+}

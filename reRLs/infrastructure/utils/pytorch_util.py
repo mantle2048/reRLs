@@ -89,6 +89,7 @@ def init_weights(m: nn.Module, gain: float = 1):
     """
     if isinstance(m, (nn.Linear, nn.Conv2d)):
         torch.nn.init.orthogonal_(m.weight, gain=gain)
+        # torch.nn.init.xavier_uniform_(m.weight, gain=gain)
         if m.bias is not None:
             m.bias.data.fill_(0.00)
 

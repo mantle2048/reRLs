@@ -196,44 +196,79 @@ def test_mujoco_video_record():
     trainer.run_training_loop()
 
 
-# # Test Async Env (async is deprecated)
+# # Test PG
 
-def test_async_env(seed=1):
-    
+def test_reinforce(seed=1):
+    env_name = 'LunarLander-v2'
     arg_list =  [
         '--env_name',
-        'LunarLander-v2',
+        env_name,
         '--exp_prefix',
-        'PG-rtg-baseline-gae_LunarLander-v2',
+        f'REINFORCE_{env_name}',
         '--n_itr',
-        '301',
+        '151',
         '--seed',
         f'{seed}',
         '--video_log_freq',
         '-1',
         '--tabular_log_freq',
         '1',
-        '--reward_to_go',
         '--itr_size',
-        '1000',
-        '--gae_lambda',
-        '0.98',
+        '2000',
         '--gamma',
-        '0.994',
+        '0.995',
         '--save_params',
-        '--entropy_coeff',
-        '0.01',
-        '--use_baseline',
+        '--reward_to_go',
         '--num_workers',
         '4',
         '--num_envs',
         '1',
         '-lr',
         '3e-3',
-        '--num_agent_train_steps_per_itr',
+    ]
+    args = get_parser().parse_args(args=arg_list) # add 'args=[]' in ( ) for useage of jupyter notebook
+    config = vars(args)
+    from pprint import pprint
+    pprint(config)
+
+    trainer = PG_Trainer(config)
+    trainer.run_training_loop()
+
+
+# # Test A2C 
+
+def test_a2c(seed=1):
+    env_name = 'LunarLander-v2'
+    arg_list =  [
+        '--env_name',
+        env_name,
+        '--exp_prefix',
+        f'A2C_{env_name}',
+        '--n_itr',
+        '151',
+        '--seed',
+        f'{seed}',
+        '--video_log_freq',
+        '-1',
+        '--tabular_log_freq',
         '1',
-        '--batch_size',
-        '1000',
+        '--itr_size',
+        '2000',
+        '--gamma',
+        '0.995',
+        '--gae_lambda',
+        '0.98',
+        '--save_params',
+        '--reward_to_go',
+        '--use_baseline',
+        '--entropy_coeff',
+        '0.01',
+        '--num_workers',
+        '4',
+        '--num_envs',
+        '1',
+        '-lr',
+        '3e-3',
     ]
     args = get_parser().parse_args(args=arg_list) # add 'args=[]' in ( ) for useage of jupyter notebook
     config = vars(args)
@@ -245,8 +280,7 @@ def test_async_env(seed=1):
 
 
 if __name__ == '__main__':
-    # test_mujoco_video_record()
-    # test_pygame_video_record()
-    test_async_env(2)
+    test_reinforce(2)
+
 
 

@@ -25,6 +25,10 @@ class PGAgent(BaseAgent):
 
         self.buffer_size = self.agent_config.setdefault('buffer_size', 1000000)
 
+        self._create_policy_and_buffer()
+
+
+    def _create_policy_and_buffer(self):
 
         # policy
         self.policy = GaussianPolicyPG(
@@ -42,12 +46,15 @@ class PGAgent(BaseAgent):
         # replay buffer
         self.replay_buffer = ReplayBuffer(self.buffer_size)
 
-    def train(self, obss, acts, rews_list, next_obss, dones) -> Dict:
+    def train(self, data_batch) -> Dict:
 
         """
             Training a PG agent refers to updating its policy using the given observations/actions
             and the calculated qvals/advantages that come from the seen rewards.
         """
+        obss, acts, rews_list, next_obss, dones = \
+                data_batch['obs'], data_batch['act'], data_batch['rew'], \
+                data_batch['next_obs'], data_batch['done']
 
         # step 1: calculate q values of each (s_t, a_t) point, using rewards [r_1, ..., r_t, ..., r_T]
         q_values = self.calculate_q_values(rews_list)

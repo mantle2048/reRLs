@@ -158,8 +158,8 @@ class RL_Trainer(object):
             train_returns = self.collect_training_trajectories(
                 itr, self.config['itr_size'], collect_policy)
 
-            paths, envsteps_this_batch, train_video_paths = train_returns
-            self.total_envsteps += envsteps_this_batch
+            paths, envsteps_this_itr, train_video_paths = train_returns
+            self.total_envsteps += envsteps_this_itr
 
             ## add collected data to replay buffer
             self.agent.add_to_replay_buffer(paths)
@@ -173,7 +173,7 @@ class RL_Trainer(object):
                 self.perform_logging(itr, paths, eval_policy, train_video_paths, train_logs)
 
                 if self.config['save_params']:
-                    self.logger.save_itr_params(itr, self.agent.policy.state_dict())
+                    self.logger.save_itr_params(itr, self.agent.policy.get_state())
                     self.logger.save_extra_data(data = self.agent.what_to_save())
 
         self.env.close()
@@ -209,10 +209,7 @@ class RL_Trainer(object):
         train_logs = []
         for train_step in range(self.config['num_agent_train_steps_per_itr']):
             data_batch = self.agent.sample(self.config.setdefault('batch_size', self.config['itr_size']))
-            obss, acts, rews, next_obss, dones = \
-                    data_batch['obs'], data_batch['act'], data_batch['rew'], \
-                    data_batch['next_obs'], data_batch['done']
-            train_log = self.agent.train(obss, acts, rews, next_obss, dones)
+            train_log = self.agent.train(data_batch)
             train_logs.append(train_log)
 
         return train_logs

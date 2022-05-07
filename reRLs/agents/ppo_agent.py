@@ -1,15 +1,14 @@
-import ray
 import numpy as np
 from scipy.signal import lfilter
 from typing import Dict,Union,List
 
 from .base_agent import BaseAgent
-from reRLs.policies import GaussianPolicyPG
-from reRLs.infrastructure.replay_buffer import ReplayBuffer
+from reRLs.policies import GaussianPolicyPPO
+from reRLs.infrastructure.replay_buffer import PPOBuffer
 from reRLs.infrastructure.utils import utils
 from reRLs.infrastructure.utils import pytorch_util as ptu
 
-class A2CAgent(BaseAgent):
+class PPOAgent(BaseAgent):
 
     def __init__(self, env, agent_config: Dict):
         super().__init__()
@@ -23,40 +22,42 @@ class A2CAgent(BaseAgent):
         self.use_baseline = self.agent_config.setdefault('use_baseline', True)
         self.reward_to_go = self.agent_config.setdefault('reward_to_go', True)
         self.gae_lambda = self.agent_config.setdefault('gae_lambda', 0.99)
+        self.epsilon = self.agent_config.setdefault('epsilon', 0.2)
+        self._create_policy_and_buffer()
 
-        self.buffer_size = self.agent_config.setdefault('buffer_size', 1000000)
-
+    def _create_policy_and_buffer(self):
 
         # policy
-        self.policy = GaussianPolicyPG(
+        self.policy = GaussianPolicyPPO(
             obs_dim = self.agent_config['obs_dim'],
             act_dim = self.agent_config['act_dim'],
             layers  = self.agent_config['layers'],
             discrete = self.agent_config['discrete'],
             learning_rate=self.agent_config['learning_rate'],
-            use_baseline=self.agent_config['use_baseline']
+            use_baseline=self.agent_config['use_baseline'],
+            entropy_coeff=self.agent_config['entropy_coeff'],
+            grad_clip=self.agent_config['grad_clip'],
+            epsilon=self.agent_config['epsilon']
         )
         self.policy.apply(ptu.init_weights)
 
         # replay buffer
-        self.replay_buffer = ReplayBuffer(self.buffer_size)
+        self.replay_buffer = PPOBuffer()
 
-    def train(self, obss, acts, rews_list, next_obss, dones) -> Dict:
+    def train(self, data_batch) -> Dict:
 
         """
-            Training a PG agent refers to updating its policy using the given observations/actions
+            Training a PPO agent refers to updating its policy using the given observations/actions
             and the calculated qvals/advantages that come from the seen rewards.
         """
+        obss, acts, rews_list, next_obss, dones, log_pi_old, advs, q_values = \
+                data_batch['obs'], data_batch['act'], data_batch['rew'], \
+                data_batch['next_obs'], data_batch['done'], \
+                data_batch['log_pi'], data_batch['adv'], data_batch['q_value']
 
-        # step 1: calculate q values of each (s_t, a_t) point, using rewards [r_1, ..., r_t, ..., r_T]
-        q_values = self.calculate_q_values(rews_list)
-
-        # step 2: calculate advantages that correspond to each (s_t, a_t) point
-        advs = self.estimate_advantages(obss, rews_list, q_values, dones)
-
-        # step 3: use all datapoints (s_t, a_t, q_t, adv_t) to update the PG actor/policy
+        # use all datapoints (s_t, a_t, q_t, adv_t) to update the PG actor/policy
         ## HINT: `train_log` should be returned by the actor update method
-        train_log = self.policy.update(obss, acts, advs, q_values)
+        train_log = self.policy.update(obss, acts, log_pi_old, advs, q_values)
 
         return train_log
 
@@ -137,13 +138,16 @@ class A2CAgent(BaseAgent):
         return advs
 
     def add_to_replay_buffer(self, paths):
-        self.replay_buffer.add_rollouts(paths)
+        self.replay_buffer.add_rollouts(paths, agent=self)
 
     def sample(self, batch_size):
-        return self.replay_buffer.sample_recent_data(batch_size, concat_rew = False)
+        return self.replay_buffer.sample_random_data(batch_size)
 
     def what_to_save(self):
         pass
+
+    def log_prob_from_dist(self, obss, acts):
+        return self.policy._log_prob_from_dist(obss, acts)
 
     def _discounted_return(self, discount, rewards: List) -> np.ndarray:
         """

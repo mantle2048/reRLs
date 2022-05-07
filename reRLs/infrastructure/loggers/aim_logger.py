@@ -103,6 +103,10 @@ class AimLogger(Logger):
         """figure: matplotlib.pyplot figure handle"""
         self._aim_run.track(value=aim.Figure(figure), name=name, step=step_, context=context)
 
+    def log_distribution(self, param, name, step, context=None):
+        dist = aim.Distribution(distribution=param)
+        self._aim_run.track(dist, name=name, step=step, context=context)
+
     def dump_tabular(self, *args, **kwargs):
 
         tabular_dict = dict(self._tabular)
@@ -118,6 +122,11 @@ class AimLogger(Logger):
             self.log_scalar(value, key, step_cnt, context={'mode': 'Step'})
 
         super().dump_tabular(*args, **kwargs)
+
+    def save_itr_params(self, itr, params):
+        super().save_itr_params(itr, params)
+        for name, param in params.items():
+            self.log_distribution(param, name, itr, context={'mode': 'Itr'})
 
     def close(self):
         self._aim_run.close()

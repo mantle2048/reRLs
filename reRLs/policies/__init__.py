@@ -1,1 +1,1 @@
-from .gaussian_policy import GaussianPolicyPG, GaussianPolicy
+from .gaussian_policy import GaussianPolicyPPO, GaussianPolicyPG, GaussianPolicy

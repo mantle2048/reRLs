@@ -82,7 +82,8 @@ class RemoteSampler(BaseSampler):
         return paths, timesteps_this_batch
 
     def sample_n_trajectories(self, ntraj, *args, **kwargs):
-        paths = [ self.sample(*args, **kwargs) for _ in range(ntraj) ]
+        """ Note that in RemoteSampler can only sample n == num_workers trajs now """
+        paths = self.sample(*args, **kwargs)
         return paths
 
     def get_diagnostics(self):
@@ -176,24 +177,19 @@ class _RemoteWorker(object):
         self._policy = pickle.loads(policy_pkl)
         self._worker_idx = worker_idx
 
-        # ptu.init_gpu(
-        #     use_gpu=not trainer_config['no_gpu'],
-        #     gpu_id=trainer_config['which_gpu']
-        # )
-
         self._trainer_config = trainer_config
         self._seed = trainer_config['seed'] * 1000 + worker_idx
         self._max_path_length = trainer_config['ep_len'] #TODO: change ep_len -> max_path_length
         self._deterministic = trainer_config['deterministic']
 
-        self._set_env_seed(self._seed)
+        self._set_seed(self._seed)
 
         if hasattr(self._env, 'initialize'):
             self._env.initialize()
 
         self._initialized = True
 
-    def _set_env_seed(self, seed):
+    def _set_seed(self, seed):
 
         if hasattr(self._env, "seed"):
             self._env.seed(seed=seed)
@@ -201,12 +197,13 @@ class _RemoteWorker(object):
             self._env.reset(seed=seed)
 
         self._env.action_space.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
 
     def is_initialized(self):
         return self._initialized
 
     def set_state(self, policy_weights):
-        # policy_weights = ray.get(policy_weights_ref)
         self._policy.set_state(policy_weights)
 
     def sample(self, render=False):

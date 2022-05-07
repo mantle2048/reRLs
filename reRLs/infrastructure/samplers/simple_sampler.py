@@ -79,7 +79,7 @@ def rollout(
 ):
     sampler = sampler_class(env, trainer_config)
     if render:
-        with sampler.render:
+        with sampler.render():
             path = sampler.sample(policy)
     else:
         path = sampler.sample(policy)

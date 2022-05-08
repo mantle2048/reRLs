@@ -41,7 +41,6 @@ class PGAgent(BaseAgent):
             entropy_coeff=self.agent_config['entropy_coeff'],
             grad_clip=self.agent_config['grad_clip']
         )
-        self.policy.apply(ptu.init_weights)
 
         # replay buffer
         self.replay_buffer = ReplayBuffer(self.buffer_size)

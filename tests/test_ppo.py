@@ -52,7 +52,7 @@ def test_ppo(seed=1):
 
 
 if __name__ == '__main__':
-    test_ppo(2)
+    test_ppo(0)
 
 
 

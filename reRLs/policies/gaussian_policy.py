@@ -82,6 +82,14 @@ class GaussianPolicy(BasePolicy, nn.Module, abc.ABC):
         else:
             self.baseline = None
 
+        self.apply(ptu.init_weights)
+
+        # do last policy layer scaling, this will make initial actions have (close to)
+        # 0 mean and std, and will help boost performances,
+        # see https://arxiv.org/abs/2006.05990, Fig.24 for details
+        ptu.scale_last_layer(self.logits_net if self.logits_net else self.mean_net)
+
+
     def save(self, filepath=None):
         torch.save(self.state_dict(), filepath)
 

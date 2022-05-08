@@ -93,6 +93,10 @@ def init_weights(m: nn.Module, gain: float = 1):
         if m.bias is not None:
             m.bias.data.fill_(0.00)
 
+def scale_last_layer(net):
+    last_layer = [m for m in net.children()][-2]
+    last_layer.weight.data.copy_(0.01 * last_layer.weight.data)
+
 def convert_to_numpy(x, reduce_type=True):
     """Converts values in `stats` to non-Tensor numpy or python types.
     Args:

@@ -40,7 +40,6 @@ class PPOAgent(BaseAgent):
             grad_clip=self.agent_config['grad_clip'],
             epsilon=self.agent_config['epsilon']
         )
-        self.policy.apply(ptu.init_weights)
 
         # replay buffer
         self.replay_buffer = PPOBuffer()

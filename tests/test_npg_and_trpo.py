@@ -84,9 +84,9 @@ def test_trpo(seed=1):
     
     arg_list =  [
         '--env_name',
-        'HalfCheetah-v3',
+        'LunarLander-v2',
         '--exp_prefix',
-        'TRPO_HalfCheetah-v3',
+        'TRPO_LunarLander-v2',
         '--n_itr',
         '151',
         '--seed',
@@ -96,13 +96,13 @@ def test_trpo(seed=1):
         '--tabular_log_freq',
         '1',
         '--itr_size',
-        '5000',
+        '2000',
         '--batch_size',
-        '5000',
+        '400',
         '--gamma',
         '0.99',
         '--gae_lambda',
-        '0.98',
+        '0.99',
         '--num_agent_train_steps_per_itr',
         '4',
         '--save_params',
@@ -126,7 +126,3 @@ def test_trpo(seed=1):
 
 if __name__ == '__main__':
     test_trpo(seed=0)
-
-
-
-

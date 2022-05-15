@@ -68,8 +68,27 @@ class PPOBuffer(BatchBuffer):
         self.paths['log_pi'] = log_pi
         self.paths['adv'] = advs
         self.paths['q_value'] = q_values
+        self.rews_list = rews_list
 
         self.size = len(concated_rews)
+
+    def sample_random_data(self, batch_size, agent, recompute_adv) -> Dict:
+        """
+            sample random data
+        """
+
+        if recompute_adv:
+            self.paths['adv'] = agent.estimate_advantages(
+                self.paths['obs'], self.rews_list,
+                self.paths['q_value'], self.paths['done']
+            )
+
+        assert batch_size <= len(self), "no enough data to sample"
+        rand_indices = np.random.randint(len(self), size=batch_size)
+        batch_data = {}
+        for key, value in self.paths.items():
+            batch_data[key] = value[rand_indices]
+        return batch_data
 
 class TRPOBuffer(BatchBuffer):
     def __init__(self):

@@ -38,6 +38,7 @@ class PPO_Trainer():
             'gamma': config['gamma'],
             'entropy_coeff': config['entropy_coeff'],
             'grad_clip': config['grad_clip'],
+            'recompute_adv': config['recompute_adv'],
         }
 
         agent_config = {
@@ -100,6 +101,7 @@ def get_parser():
     parser.add_argument('--video_log_freq', type=int, default=-1)
     parser.add_argument('--tabular_log_freq', type=int, default=1)
     parser.add_argument('--save_params', action='store_true')
+    parser.add_argument('--recompute_adv', action='store_true')
 
     # wrapper args
     parser.add_argument('--obs_norm', action='store_true')

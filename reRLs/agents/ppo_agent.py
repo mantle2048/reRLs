@@ -24,6 +24,7 @@ class PPOAgent(BaseAgent):
         self.gae_lambda = self.agent_config.setdefault('gae_lambda', 0.99)
         self.epsilon = self.agent_config.setdefault('epsilon', 0.2)
         self.target_kl = self.agent_config.setdefault('target_kl', None)
+        self.recompute_adv = self.agent_config.setdefault('recompute_adv', False)
         self._create_policy_and_buffer()
 
     def _create_policy_and_buffer(self):
@@ -145,7 +146,7 @@ class PPOAgent(BaseAgent):
         self.replay_buffer.add_rollouts(paths, agent=self)
 
     def sample(self, batch_size):
-        return self.replay_buffer.sample_random_data(batch_size)
+        return self.replay_buffer.sample_random_data(batch_size, self, self.recompute_adv)
 
     def what_to_save(self):
         pass

@@ -13,7 +13,7 @@ def test_ppo(seed=1):
         '--exp_prefix',
         'PPO_LunarLander-v2',
         '--n_itr',
-        '1',
+        '151',
         '--seed',
         f'{seed}',
         '--video_log_freq',
@@ -41,6 +41,7 @@ def test_ppo(seed=1):
         '-lr',
         '3e-3',
         '--reward_to_go',
+        '--recompute_adv',
     ]
     args = get_parser().parse_args(args=arg_list) # add 'args=[]' in ( ) for useage of jupyter notebook
     config = vars(args)
@@ -52,7 +53,7 @@ def test_ppo(seed=1):
 
 
 if __name__ == '__main__':
-    test_ppo(0)
+    test_ppo(1)
 
 
 

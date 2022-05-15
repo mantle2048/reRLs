@@ -209,6 +209,7 @@ class RL_Trainer(object):
         train_logs = []
         for train_step in range(self.config['num_agent_train_steps_per_itr']):
             data_batch = self.agent.sample(self.config.setdefault('batch_size', self.config['itr_size']))
+            # if itr == 0 and train_step == 1:
             train_log, continue_training = self.agent.train(data_batch)
             train_logs.append(train_log)
             ## continue_training tag is used for early stop training

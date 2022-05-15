@@ -4,7 +4,7 @@ from typing import Dict,Union,List
 
 from .base_agent import BaseAgent
 from reRLs.policies import GaussianPolicyPPO
-from reRLs.infrastructure.replay_buffer import PPOBuffer
+from reRLs.infrastructure.buffers import PPOBuffer
 from reRLs.infrastructure.utils import utils
 from reRLs.infrastructure.utils import pytorch_util as ptu
 
@@ -150,8 +150,8 @@ class PPOAgent(BaseAgent):
     def what_to_save(self):
         pass
 
-    def log_prob_from_dist(self, obss, acts):
-        return self.policy._log_prob_from_dist(obss, acts)
+    def get_log_prob(self, obss, acts):
+        return self.policy._get_log_prob(obss, acts)
 
     def _discounted_return(self, discount, rewards: List) -> np.ndarray:
         """

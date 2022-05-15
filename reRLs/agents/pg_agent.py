@@ -4,7 +4,7 @@ from typing import Dict,Union,List
 
 from .base_agent import BaseAgent
 from reRLs.policies import GaussianPolicyPG
-from reRLs.infrastructure.replay_buffer import ReplayBuffer
+from reRLs.infrastructure.buffers import ReplayBuffer
 from reRLs.infrastructure.utils import utils
 from reRLs.infrastructure.utils import pytorch_util as ptu
 

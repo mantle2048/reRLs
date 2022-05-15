@@ -13,7 +13,7 @@ def test_ppo(seed=1):
         '--exp_prefix',
         'PPO_LunarLander-v2',
         '--n_itr',
-        '151',
+        '1',
         '--seed',
         f'{seed}',
         '--video_log_freq',

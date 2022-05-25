@@ -121,7 +121,11 @@ def get_parser():
 def main():
 
     parser = get_parser()
-    args = parser.parse_args()
+    arg_list =  [
+        '--save_params',
+        '--reward_to_go',
+    ]
+    args = parser.parse_args(args=arg_list)
 
     # convert to dictionary
     config = vars(args)

@@ -118,7 +118,6 @@ class GaussianPolicyTRPO(GaussianPolicy):
                     step_size = step_size * self.backtrack_coeff
                 else:
                     self._set_from_flat_params(policy, new_flat_params)
-                    step_size = torch.zeros_like(step_size)
                     warnings.warn(f'Line search failed!')
 
             backtrack_iters = i

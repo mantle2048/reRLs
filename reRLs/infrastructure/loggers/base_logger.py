@@ -233,6 +233,8 @@ class Logger(object):
         self.pop_tabular_prefix()
 
     def log_variant(self, file_name, variant_data):
+        self.log(f"{file_name}:")
+        self.log(f"{variant_data}")
         file_name = osp.join(self._snapshot_dir, file_name)
         mkdir_p(os.path.dirname(file_name))
         with open(file_name, "a") as f:

@@ -6,6 +6,7 @@ import aim
 from enum import Enum
 from typing import Dict
 from moviepy import editor as mpy # this line for 'moviepy' correctly run
+from matplotlib import pyplot as plt
 from reRLs import user_config as conf
 from reRLs.infrastructure.loggers.base_logger import Logger, mkdir_p
 from reRLs.infrastructure.utils import utils
@@ -36,17 +37,22 @@ class AimLogger(Logger):
 
     def set_snapshot_dir(self, dir_name):
         ''' set snapshot dir and init aim run '''
+        self._snapshot_dir = dir_name
+
         exp_name = dir_name.split("/")[-1]
         exp_name_no_timestamp = '_'.join(exp_name.split("_")[-3:-1])
         seed_exp_id = exp_name.split("_")[-1]
-        self._snapshot_dir = dir_name
+        aim_dir = osp.dirname(osp.dirname(osp.dirname(dir_name)))
         self._aim_run = aim.Run(
-            repo=conf.LOCAL_DIR,
+            repo=aim_dir,
             experiment=exp_name
         )
         self._aim_run.name = exp_name_no_timestamp
         self._aim_run.description = seed_exp_id
         # Add description and change Run name
+        print('########################')
+        print('aim outputs to ', aim_dir)
+        print('########################')
 
     def log_variant(self, file_name, variant_data):
         # super(AimLogger, self).log_variant(file_name, variant_data)
@@ -99,9 +105,18 @@ class AimLogger(Logger):
         mkdir_p(self._video_log_dir)
         self.log_video(videos, video_title, step, fps=fps)
 
-    def log_figure(self, figure, name, step, context=None):
+    def log_figure(self, figure, name, step, context=None, dpi=300):
         """figure: matplotlib.pyplot figure handle"""
-        self._aim_run.track(value=aim.Figure(figure), name=name, step=step_, context=context)
+        # aim default matplotlib track is ugly !!
+        # self._aim_run.track(value=aim.Figure(figure), name=name, step=step, context=context)
+        self._figure_log_dir = osp.join(self._snapshot_dir, 'figure')
+        mkdir_p(self._figure_log_dir)
+        caption = f'{name}_{step}.png'
+        figure_log_path = osp.join(self._figure_log_dir, caption)
+        plt.savefig(figure_log_path, dpi=dpi)
+        plt.close(figure)
+        aim_image = aim.Image(image=figure_log_path, caption=caption, format='png')
+        self._aim_run.track(value=aim_image, name=name, step=step, context=context)
 
     def log_distribution(self, param, name, step, context=None):
         dist = aim.Distribution(distribution=param)

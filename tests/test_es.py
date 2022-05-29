@@ -138,9 +138,13 @@ def test_es(seed=1):
         '--tabular_log_freq',
         '1',
         '--num_agent_train_steps_per_itr',
-        '1',
+        '10',
         '--learning_rate',
+        '0.0003',
+        '--sigma_init',
         '0.01',
+        '--sigma_limit',
+        '0.001',
         '--save_params',
         # '--antithetic',
         # '--rank_fitness',
@@ -155,7 +159,7 @@ def test_es(seed=1):
 
 
 if __name__ == '__main__':
-    test_es(3)
+    test_es(0)
 
 
 

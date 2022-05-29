@@ -217,13 +217,8 @@ class GaussianPolicyES(GaussianPolicy):
 
         grad = 1./ (self.popsize * self.sigma) * (epsilons.T @ normalized_rewards).sum()
 
-        # self.optimizer.stepsize = self.learning_rate
-        # update_ratio = self.optimizer.update(-grad)
-        mu = np.copy(self.mu)
-        mu += self.learning_rate * grad
-        self.mu = np.copy(mu)
-        update_ratio = np.mean(self.learning_rate * grad)
-
+        self.optimizer.stepsize = self.learning_rate
+        update_ratio = self.optimizer.update(-grad)
 
         train_log = {}
         train_log['Best Solution'] = self.best_solution

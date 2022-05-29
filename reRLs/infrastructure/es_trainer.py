@@ -135,17 +135,6 @@ class ES_Trainer(object):
             ## train agent (using sampled data from replay buffer)
             self.total_envsteps += env_steps_this_itr
 
-            # if itr == 12:
-            #     import ray
-            #     remote_policy_ref =  self.agent.es_workers.remote_workers()[-3].get_policy.remote()
-            #     remote_policy = ray.get(remote_policy_ref)
-            #     policy = self.agent.policy
-
-            #     remote_mu = remote_policy.mu
-            #     mu = policy.mu
-
-            #     import ipdb; ipdb.set_trace()
-
             train_logs = self.tell_agent(solutions)
 
             ## log/save

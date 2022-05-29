@@ -19,6 +19,10 @@ plt.rcParams['image.interpolation'] = 'nearest'
 plt.rcParams['image.cmap'] = 'gray'
 plt.rcParams['xtick.labelsize'] = 24
 plt.rcParams['ytick.labelsize'] = 24
+plt.rcParams['axes.titlesize'] = 24
+plt.rcParams['axes.labelsize'] = 20
+plt.rcParams['lines.linewidth'] = 3
+plt.rcParams['lines.markersize'] = 10
 sns.set(style='whitegrid', palette='tab10', font_scale=1.5)
 
 
@@ -209,6 +213,8 @@ def plot_event_data(
     
     if title is None:
         title = event_name
+        ax.set_title(title)
+        
     if output_path is None:
         img_dir = osp.join(data_dir, 'img')
     else:
@@ -238,7 +244,7 @@ def plot_event_data(
         plot_exp_data(data=exp_data, ax=ax, xaxis=xaxis,value=value, condition=condition, color=color, smooth=smooth)
         
     Path(img_dir).mkdir(parents=True, exist_ok=True)
-    img_name = osp.join(img_dir, f'{event_name}_{value}.pdf')
+    img_name = osp.join(img_dir, f'{event_name}_{value}.png')
     
     fig.savefig(img_name, dpi=200)
         
@@ -256,6 +262,7 @@ def main():
         'ylabel': None,
         'title': None,
         'count': False,
+        'title': None,
         'smooth': 1,
         'legend': ['REINFORCE','A2C','TRPO', 'PPO'],
         'output_path': None,
@@ -265,10 +272,11 @@ def main():
         event_name=config['event_name'],
         xaxis=config['xaxis'],
         value=config['value'],
-        xlabel=config['xlabel'],
-        ylabel=config['ylabel'],
         xlim=config['xlim'],
         ylim=config['ylim'],
+        xlabel=config['xlabel'],
+        ylabel=config['ylabel'],
+        title=config['title'],
         count=config['count'],
         smooth=config['smooth'],
         legend=config['legend'],

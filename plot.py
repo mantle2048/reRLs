@@ -1,17 +1,7 @@
 # +
-# %matplotlib notebook
-# %matplotlib inline
-
-
-# for auto-reloading external modules
-# see http://stackoverflow.com/questions/1907993/autoreload-of-modules-in-ipython
-
-# %load_ext autoreload
-# %autoreload 2
-
 from typing import List, Dict
 
-import tensorflow as tf
+from typing import List
 import matplotlib.pyplot as plt
 from scipy.ndimage import uniform_filter1d
 import seaborn as sns
@@ -19,63 +9,142 @@ import pandas as pd
 import numpy as np
 import glob
 import os
+import os.path as osp
+from collections import defaultdict
+from pathlib import Path
+from termcolor import colored
 
 plt.rcParams['figure.figsize'] = (10.0, 8.0) # set default size of plots
 plt.rcParams['image.interpolation'] = 'nearest'
 plt.rcParams['image.cmap'] = 'gray'
+plt.rcParams['xtick.labelsize'] = 24
+plt.rcParams['ytick.labelsize'] = 24
+sns.set(style='whitegrid', palette='tab10', font_scale=1.5)
 
 
-data_dir = os.path.join(os.getcwd(), 'run_logs')
-img_dir = os.path.join(os.getcwd(), 'image')
+# %matplotlib notebook
+# %reload_ext autoreload
+# %autoreload 2
+
+
+data_dir = osp.join(os.getcwd(), 'benchmark')
+event_dir = osp.join(data_dir, 'LunarLander-v2')
+print(event_dir)
+
+# -
+
+COLORS = (
+    [
+        # deepmind style
+        '#0072B2',
+        '#009E73',
+        '#D55E00',
+        '#CC79A7',
+        # '#F0E442',
+        '#d73027',  # RED
+        # built-in color
+        'blue',
+        'red',
+        'pink',
+        'cyan',
+        'magenta',
+        'yellow',
+        'black',
+        'purple',
+        'brown',
+        'orange',
+        'teal',
+        'lightblue',
+        'lime',
+        'lavender',
+        'turquoise',
+        'darkgreen',
+        'tan',
+        'salmon',
+        'gold',
+        'darkred',
+        'darkblue',
+        'green',
+        # personal color
+        '#313695',  # DARK BLUE
+        '#74add1',  # LIGHT BLUE
+        '#f46d43',  # ORANGE
+        '#4daf4a',  # GREEN
+        '#984ea3',  # PURPLE
+        '#f781bf',  # PINK
+        '#ffc832',  # YELLOW
+        '#000000',  # BLACK
+    ]
+)
 
 
 # +
-def get_event_data(event_dir: str) -> pd.DataFrame:
-    from collections import defaultdict
-    exp_name = event_dir.split('/')[-3]
-    run_name = event_dir.split('/')[-2]
+def compute_std(data_frames: List[pd.DataFrame]) -> List[pd.DataFrame]:
+    '''compute and return standard deviation of give the list of data_frame'''
     data_dict = defaultdict(list)
+    std_data_dict = {}
+    for data_frame in  data_frames:
+        for key in data_frame.keys():
+            data_dict[key].append(data_frame[key].to_list())
+            
+    for key in data_dict:
+        data_list = data_dict[key]
+        pad = len(max(data_list, key=len))
+        data_array = np.array([i + [0]*(pad-len(i)) for i in data_list])
+        std_data_dict['std:'+key] = np.std(data_array, axis=0)
+    
+    std_data_frame = pd.DataFrame(std_data_dict)
+    return std_data_frame
 
-    Iteration = 0
-    for event in tf.train.summary_iterator(event_dir):
-        for value in event.summary.value:
-            if value.tag is not None:
-                data_dict[value.tag].append(value.simple_value)
-
-    step_length = None
-    for key, values in data_dict.items():
-        if key == 'Train_EnvstepsSoFar':
-            step_length = len(values)
-
-    assert step_length is not None, 'Please specify your steps key value'
-
-    for key, values in data_dict.items():
-        if len(values) < step_length:
-            gap =  step_length - len(values)
-            data_dict[key] = [0] * gap + values
+def compute_mean(data_frames: List[pd.DataFrame], key='TotalEnvInteracts') -> List[pd.DataFrame]:
+    value_list = []
+    for data_frame in  data_frames:
+        value_list.append(data_frame[key].to_list())
+            
+    value_array = np.array(value_list)
+    mean_value = np.mean(value_array, axis=0)
+    for data_frame in  data_frames:
+        data_frame[key] = mean_value
 
 
-    iteration = np.arange(1, step_length + 1)
-    data_dict['Iteration'] = iteration
-
-
-    data = pd.DataFrame(data_dict)
-    data['Condition1'] = exp_name
-    data['Condition2'] = run_name
-    return data
-
-# event_dir = '/home/yan/code/CS285_2020Fall_Homework/hw5/run_logs/part2_sub1/hw5_expl_q2_med_dqn/hw5_expl_q2_med_dqn_PointmassMedium-v0_06-01-2022_14-34-49/events.out.tfevents.1641450889.yan-PC'
-# get_event_data(event_dir)
 # -
 
-def get_exp_data(events_dir: str) -> List[pd.DataFrame]:
-    exp_data = []
-    for event_dir in events_dir:
-        exp_data.append(get_event_data(event_dir))
+def get_exp_data(exp_dir, condition=None):
+    '''data_dir: ~/{data_dir}/{event_dir}/{exp_name}/{run_name}
+    Note that in exp_dir, may be multi runs with
+    different random seeds
+    example: ~/data/LunarLander-v2/PPO_LunarLander-v2/{PPO_LunarLander-v2_3}
+    '''
+    progress_dir = osp.join(exp_dir, '*', 'progress.csv')
+    all_progress_dirs = glob.glob(progress_dir)
+    all_data_frames = []
+    for progress_dir in all_progress_dirs:
+        run_name = osp.split(osp.dirname(progress_dir))[-1]
+        exp_name = osp.split(osp.dirname(osp.dirname(progress_dir)))[-1]
+        condition1 = condition or exp_name
+        condition2 = run_name
+        data_frame = pd.read_csv(progress_dir, sep=',')
+        data_frame['Condition1'] = condition1
+        data_frame['Condition2'] = condition2
+        all_data_frames.append(data_frame)
+    
+    # calculate mean totalenvinteracts
+    compute_mean(all_data_frames, key='TotalEnvInteracts')
+    exp_data = pd.concat(all_data_frames, ignore_index=True)
+    exp_data.fillna(0)
     return exp_data
+exp_data = get_exp_data(osp.join(event_dir, 'PPO_LunarLander-v2'))
 
 
-def plot_data(data: pd.DataFrame, ax=None, xaxis='Iteration', value='EvalAverageReturn', condition='Condition2', smooth=1):
+def plot_exp_data(
+        data: pd.DataFrame, 
+        ax=None, 
+        xaxis='Itr', 
+        value='AverageTrainReward', 
+        condition='Condition2', 
+        color='blue', 
+        smooth=1
+    ):
     if smooth > 1:
         if isinstance(data, list):
             for datam in data:
@@ -84,43 +153,130 @@ def plot_data(data: pd.DataFrame, ax=None, xaxis='Iteration', value='EvalAverage
             data[value]=uniform_filter1d(data[value], size=smooth)
     if isinstance(data, list):
         data = pd.concat(data, ignore_index=True)
-    env_name = '_'.join(data['Condition1'][0].split('_')[0:-1])
-    sns.set(style='whitegrid', palette='tab10', font_scale=1.5)
-    sns.lineplot(data=data, x=xaxis, y=value, hue=condition, ci='sd', ax=ax, linewidth=3.0)
+    sns.lineplot(data=data, x=xaxis, y=value, hue=condition, ci='sd', ax=ax, palette=[color], linewidth=3.0)
     leg = ax.legend(loc='best') #.set_draggable(True)
     for line in leg.get_lines():
         line.set_linewidth(3.0)
-    ax.set_title(env_name)
     xscale = np.max(np.asarray(data[xaxis])) > 5e3
     if xscale:
         # Just some formatting niceness: x-axis scale in scientific notation if max x is large
         ax.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 
 
-def sort_func(x):
-    suffix = x.split('/')[-3].split('_')[-1]
-    try:
-        suffix=float(suffix)
-    except ValueError:
-        print('exp_suffix is not a str')
-    return suffix
+def plot_event_data(
+    data_dir,
+    event_name,
+    xaxis='TotalEnvInteracts',
+    value='AverageReward',
+    xlabel='Million Steps',
+    ylabel='Reward',
+    xlim=None,
+    ylim=None,
+    legend=None,
+    title=None,
+    count=True,
+    smooth=1,
+    output_path=None,
+    ):
+    
+    # ===============================================================================
+    # get exp_names
+    # ===============================================================================
+    event_dir = osp.join(data_dir, event_name)
+    exp_names = os.listdir(event_dir)
+    fig, ax = plt.subplots(1,1)
+    
+    # ===============================================================================
+    # figure setting
+    # ===============================================================================
+    if xlabel is None:
+        xlabel = xaxis 
+    if ylabel is None:
+        ylabel = value 
+        
+    if xlim:
+        ax.set(xlim=(xlim))
+    if ylim:
+        ax.set(ylim=(ylim))
+        
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    
+    if legend is not None:
+        assert len(legend) == len(exp_names), 'Legend number must match exp_name'
+    else:
+        legend = [None] * len(exp_names)
+    
+    if title is None:
+        title = event_name
+    if output_path is None:
+        img_dir = osp.join(data_dir, 'img')
+    else:
+        img_dir = osp.join(data_dir, 'output_path')
+    
+    # sort exp_names and legend
+    exp_names = sorted(exp_names)
+    legend = sorted(legend)
+       
+    # ===============================================================================
+    # read and plot exp data
+    # ===============================================================================
+    exp_datas = []
+    for exp_name, leg in zip(exp_names, legend):
+        exp_dir = osp.join(event_dir, exp_name)
+        exp_data = get_exp_data(exp_dir, leg)
+        exp_datas.append(exp_data)
+        
+    condition = 'Condition2' if count else 'Condition1'
+    
+    for idx,(exp_name, exp_data) in enumerate(zip(exp_names, exp_datas)):
+        print(exp_name, ': ', exp_data.keys().to_list())
+        if value not in exp_data.keys():
+            print(colored(f'Fail! {exp_name} doesn\'t have value {value}', 'red'))
+            continue
+        color = COLORS[idx % len(COLORS)]
+        plot_exp_data(data=exp_data, ax=ax, xaxis=xaxis,value=value, condition=condition, color=color, smooth=smooth)
+        
+    Path(img_dir).mkdir(parents=True, exist_ok=True)
+    img_name = osp.join(img_dir, f'{event_name}_{value}.pdf')
+    
+    fig.savefig(img_name, dpi=200)
+        
 
 
-# +
-def read_exp_data_and_plot(log_dir: str, exp_names: List, plot_config: Dict={}):
-    exp_num = len(exp_names)
-    fig, axs = plt.subplots(exp_num, 1, figsize=(8, exp_num * 6))
-    if not isinstance(axs, np.ndarray): axs = [axs]
-    for ax, exp_name in zip(axs, exp_names):
-        exp_dir = os.path.join(log_dir, f'*{exp_name}*')
-        events_dir = glob.glob(os.path.join(exp_dir, '*', '*events*'))
-        events_dir = sorted(events_dir, key=sort_func, reverse=False)
-        exp_data = get_exp_data(events_dir)
-        plot_data(data=exp_data, ax=ax, **plot_config)
-    plt.tight_layout(pad=0.5)
+def main():
+    config = {
+        'data_dir': "benchmark",
+        'event_name': 'LunarLander-v2',
+        'xaxis': 'TotalEnvInteracts',
+        'value': 'AverageTrainReward',
+        'xlim': [0,300000],
+        'ylim': [-200,300],
+        'xlabel': None,
+        'ylabel': None,
+        'title': None,
+        'count': False,
+        'smooth': 1,
+        'legend': ['REINFORCE','A2C','TRPO', 'PPO'],
+        'output_path': None,
+    }
+    plot_event_data(
+        data_dir=config['data_dir'],
+        event_name=config['event_name'],
+        xaxis=config['xaxis'],
+        value=config['value'],
+        xlabel=config['xlabel'],
+        ylabel=config['ylabel'],
+        xlim=config['xlim'],
+        ylim=config['ylim'],
+        count=config['count'],
+        smooth=config['smooth'],
+        legend=config['legend'],
+        output_path=config['output_path'],
+   )
 
 
 if __name__ == '__main__':
-    pass
+    main()
 
 

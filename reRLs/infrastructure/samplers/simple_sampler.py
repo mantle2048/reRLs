@@ -8,7 +8,8 @@ class SimpleSampler(BaseSampler):
     def __init__(self, env, trainer_config):
 
         super().__init__(env, trainer_config)
-        self._cur_obs = self._env.reset(seed=self._seed)
+        # self._cur_obs = self._env.reset(seed=self._seed)
+        self._cur_obs = self._env.reset()
 
     def sample(self, policy):
         obss, acts, rews, next_obss, terminals, image_obss = [], [], [], [], [], []

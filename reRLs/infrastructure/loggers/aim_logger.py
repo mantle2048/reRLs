@@ -130,7 +130,7 @@ class AimLogger(Logger):
         itr = tabular_dict.pop('Itr')
 
         assert 'TotalEnvInteracts' in tabular_dict.keys(), 'no item **Itr** in tabular for aim logger'
-        step_cnt= tabular_dict.pop('TotalEnvInteracts')
+        step_cnt= int(tabular_dict.pop('TotalEnvInteracts'))
 
         for key, value in tabular_dict.items():
             self.log_scalar(value, key, itr, context={'mode': 'Itr'})

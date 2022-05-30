@@ -6,6 +6,7 @@ A collection of RL papers reproduced by mantle 2048
 - [x] NPG
 - [x] TRPO
 - [x] PPO
+- [x] OpenAI ES
 - [ ] DDPG
 - [ ] TD3
 - [ ] SAC

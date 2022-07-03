@@ -20,7 +20,6 @@ plt.rcParams['image.cmap'] = 'gray'
 plt.rcParams['xtick.labelsize'] = 24
 plt.rcParams['ytick.labelsize'] = 24
 plt.rcParams['axes.titlesize'] = 24
-plt.rcParams['axes.labelsize'] = 20
 plt.rcParams['lines.linewidth'] = 3
 plt.rcParams['lines.markersize'] = 10
 sns.set(style='whitegrid', palette='tab10', font_scale=1.5)

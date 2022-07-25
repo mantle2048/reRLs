@@ -127,12 +127,12 @@ class AimLogger(Logger):
         tabular_dict = dict(self._tabular)
 
         itr_mode = False
-        if 'Itr' in tabular_dict.keys(): 'no item **Itr** in tabular for aim logger'
+        if 'Itr' in tabular_dict.keys(): 
             itr = tabular_dict.pop('Itr')
             itr_mode = True
 
         step_mode = False
-        if 'TotalEnvInteracts' in tabular_dict.keys(): 'no item **Itr** in tabular for aim logger'
+        if 'TotalEnvInteracts' in tabular_dict.keys():
             step_cnt= int(tabular_dict.pop('TotalEnvInteracts'))
             step_mode = True
 
